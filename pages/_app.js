@@ -15,7 +15,7 @@ function MyApp({ Component, pageProps }) {
     {
       dispatch({
         type: 'UPDATE_ADDRESS',
-        payload: window.ethereum.selectedAddress
+        payload: window.ethereum && window.ethereum.selectedAddress
       })
       }
   },[])

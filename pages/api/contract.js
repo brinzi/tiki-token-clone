@@ -2,7 +2,7 @@ import Web3 from "web3"
 
 const getDividendInfo = (address,artifact) => {
 
-    const contractAddress = "0x38fc3f9b261a402954242718a42fb210a5ac6126";
+    const contractAddress = "0x001e07bbf8c7cb9d79b52462c440d68de5230dc6";
   
     const web3Ws = new Web3(
     new Web3.providers.HttpProvider(
@@ -21,7 +21,7 @@ const getDividendInfo = (address,artifact) => {
           contract.getAccountDividendsInfo(address).then(result => {
               provider.getBalance(address).then(balance => {
             
-              setBnbHoldings((balance/1e18).toFixed(4))
+              setMagmaings((balance/1e18).toFixed(4))
               setPaid( parseInt(result[4]._hex, 16) - parseInt(result[3]._hex, 16) )
               setLastPaid(parseInt(result[5]._hex, 16)*1000)
               setNextPayoutProgress((100-((parseInt(result[2]._hex, 16)/parseInt(holders._hex, 16))*100)).toFixed(0))

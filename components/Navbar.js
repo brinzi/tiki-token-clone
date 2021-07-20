@@ -12,7 +12,7 @@ export default function Navbar({setmodep ,setsidebarp, address,dispatch}) {
         e.preventDefault()
         dispatch({
             type: 'UPDATE_ADDRESS',
-            payload: e.target.value
+            payload: e.target.value.trim()
         })
     }
     
@@ -44,9 +44,9 @@ export default function Navbar({setmodep ,setsidebarp, address,dispatch}) {
                             onChange={(e)=> {loadDividends(e)}}
                     />
                 </div>
-                <div >
+                {/* <div >
                     <GiHamburgerMenu onClick={()=>{ setsideBar(!sideBar) }} className="cursor-pointer block lg:hidden text-2xl dark:text-white text-black m-1" />
-                </div>
+                </div> */}
             </div>
         </nav>
         </>

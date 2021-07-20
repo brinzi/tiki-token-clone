@@ -27,30 +27,8 @@ export default function Aside({ setsidebarp }) {
                 <div className="py-4 text-gray-500 dark:text-gray-400">
                     <a className="flex ml-6 text-lg font-bold text-gray-800 dark:text-gray-200" href="">
                         <img className="mr-2 w-10 h-10" src="logo2.png" />
-                        <span className="self-center">The BNBHODL Bar</span>
+                        <span className="self-center">Magma BNB Rewards</span>
                     </a>
-
-                    <ul className="mt-6">
-                        <li className="relative px-6 py-3">
-                            <Link href="/">
-                                <a   className={`inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 ${light ? "text-gray-800 dark:text-gray-200" : "text-gray-500 dark:text-gray-400"} `} >
-                                    <FaHome />
-                                    <span className="ml-4">Dashboard</span>
-                                </a>
-                            </Link>
-                        </li>
-                    </ul>
-                    {/* <ul className="mt-6">
-                        <li className="relative px-6 py-3">
-                            <Link href="/recovery">
-                                <a  onClick={(e)=>{ setsideBar(!sideBari); e.preventDefault() }} className={`inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200 ${light ? "text-gray-500 dark:text-gray-400" : "text-gray-800 dark:text-gray-200"} `} >
-                                    <RiDeviceRecoverLine />
-                                    <span className="ml-4">Recovery</span>
-                                </a>
-                            </Link>
-                        </li>
-                    </ul> */}
-
                 </div>
             </aside>
         </>
