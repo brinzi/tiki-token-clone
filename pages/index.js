@@ -538,9 +538,9 @@ export default function Home({ address }) {
 
 
   useEffect(() => {
-    getmagmaVolume().then(res => {
-      setmagmaVolume(res);
-    });
+    // getmagmaVolume().then(res => {
+    //   setmagmaVolume(res);
+    // });
 
     getBnbPrice().then(res => {
       setBnbPrice(res);
@@ -559,7 +559,9 @@ export default function Home({ address }) {
     //  })
 
     if (ethers.utils.isAddress(address)) {
-      if (localStorage.getItem('address') !== address) localStorage.setItem('address', address);
+      if (localStorage.getItem('address') !== address) {
+        localStorage.setItem('address', address);
+      }
       callContract(address);
     }
   }, [address, refreshAddressData]);
@@ -574,17 +576,17 @@ export default function Home({ address }) {
   }, bnbPrice);
 
 
-  const earningsInDollars = magmaVolume == 0 ? (holdings / 1000000000) * 220000 : (holdings / 1000000000) * (magmaVolume * 0.11);
-  const earningsInBnb = earningsInDollars / bnbPrice;
+  // const earningsInDollars = magmaVolume == 0 ? (holdings / 1000000000) * 220000 : (holdings / 1000000000) * (magmaVolume * 0.11);
+  // const earningsInBnb = earningsInDollars / bnbPrice;
 
   const payoutText = <><span className="text-yellow-300">{nextPayoutValue != 0 ? nextPayoutValue + ' BNB' : 'Processing'}</span>{Date.now() - lastPaid >= 3600000 ? ` | ${nextPayoutProgress}%` : ` | ${(60 - ((Date.now() - lastPaid) / 60000)).toFixed(0)}m`}</>;
-  const compoundedmagmaAfterNDays = (starting, days) => {
-    let accumulatedmagma = Number(starting);
-    for (let i = 0; i < days; i++) {
-      accumulatedmagma = magmaVolume == 0 ? accumulatedmagma + (((accumulatedmagma / 1000000000) * 220000) / magmaPrice) : accumulatedmagma + (((accumulatedmagma / 1000000000) * (magmaVolume * 0.11)) / magmaPrice);
-    }
-    return accumulatedmagma.toFixed(0);
-  };
+  // const compoundedmagmaAfterNDays = (starting, days) => {
+  //   let accumulatedmagma = Number(starting);
+  //   for (let i = 0; i < days; i++) {
+  //     accumulatedmagma = magmaVolume == 0 ? accumulatedmagma + (((accumulatedmagma / 1000000000) * 220000) / magmaPrice) : accumulatedmagma + (((accumulatedmagma / 1000000000) * (magmaVolume * 0.11)) / magmaPrice);
+  //   }
+  //   return accumulatedmagma.toFixed(0);
+  // };
 
   const callContract = () => {
     magmaContract.getNumberOfDividendTokenHolders().then(holders => {
