@@ -1,6 +1,19 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body{
-    overflow:hidden;
+
+@font-face {
+  font-family: "Lulo Clean W01 One Bold";
+  src: url("/fonts/FontsFree-Net-Lulo-Clean-W01-One-Bold.ttf");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
 }
+
+body {
+  /* overflow: hidden; */
+}
+
+/* h1 {
+  font-family: "Lulo Clean W01 One Bold";
+} */

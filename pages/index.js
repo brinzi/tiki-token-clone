@@ -608,17 +608,18 @@ export default function Home({ address }) {
   };
 
   return (
-    <div className="h-screen  overflow-y-scroll ">
+    <div className="h-screen ">
       <div className="max-w-screen-lg mx-auto py-5 mb-10">
         <section className="">
-          <div className="w-11/12  mx-auto ">
-            <h1 className="text-4xl font-semibold text-black dark:text-white  mb-4">Magma Earnings Manager</h1>
-            {/* <div className="text-white text-xl flex flex-row justify-between p-3 my-3 rounded bg-yellow-600">
-              <div>
-                <h1>Please enter your address above</h1>
-              </div>
-       
-            </div> */}
+          <div className="w-11/12  mx-auto  ">
+
+            <div className="flex align-center justify-between	 ">
+
+              <h1 className="text-4xl font-semibold text-black dark:text-white  mb-4 items-center flex">MAGMA Earnings Manager</h1>
+              <img className="w-42 h-32 mb-4 mt-4" src="/logo.png" />
+
+
+            </div>
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4  ">
               <div className="min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800">
                 <div className="p-4 flex items-center">
@@ -663,7 +664,7 @@ export default function Home({ address }) {
                 <div className="p-4 flex flex-col text-center items-center">
 
                   <img className="w-32 h-32 mb-4 mt-4" src="/bnb.png" />
-                  <p className="mt-4 font-semibold text-gray-600 dark:text-gray-300 text-3xl text-center">Total BNB Paid To Magma Holders</p>
+                  <p className="mt-4 font-semibold text-gray-600 dark:text-gray-300 text-3xl text-center">Total Paid To Magma Holders</p>
                   <p className="text-green-400 dark:text-green-400 text-4xl md:text-6xl text-center mb-8">
                     {totalDividentDistributed}
                     <span className="text-yellow-300">BNB</span>
