@@ -377,24 +377,28 @@ const pcsRouter = {
     { stateMutability: 'payable', type: 'receive' },
   ],
 };
+const ltc = {
+  address: '0x4338665cbb7b2485a8855a139b75d5e34ab0db94',
+  decimals: 18,
+};
+
 const bnb = {
   address: '0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c',
   decimals: 18,
 };
+
 const busd = {
   address: '0xe9e7cea3dedca5984780bafc599bd69add087d56',
   decimals: 18,
 };
 
-const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed1.defibit.io/");
+const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
 
-const magmaContractAddress = '0x935607e39117435d35c0750af4d043124d287fd4';
+const magmaContractAddress = '0x52FF3BBf7a4ed376A0Ee60b0c0517A7b325225B3';
 const magmaDecimals = 18;
 const magmaAbi = artifact;
 const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, provider);
 const pcsRouterContract = new ethers.Contract(pcsRouter.address, pcsRouter.abi, provider);
-
-
 
 
 async function getAmountsOut(quoteAmount, path) {
@@ -413,9 +417,16 @@ async function getmagmaPrice() {
 }
 
 async function getBnbPrice() {
-  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, bnb.decimals)}`, [bnb.address, busd.address]);
+  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, bnb.decimals)}`, [  bnb.address, busd.address]);
   const priceInUsd = Number(functionResponse?.amounts[1].toString()) / Math.pow(10, busd.decimals);
   // console.log('bnb', priceInUsd)
+  return priceInUsd;
+}
+
+async function getLtcPrice() {
+ console.log(await provider.getBlockNumber());
+  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, ltc.decimals)}`, [ ltc.address, bnb.address, busd.address]);
+  const priceInUsd = Number(functionResponse?.amounts[2].toString()) / Math.pow(10, busd.decimals);
   return priceInUsd;
 }
 
@@ -535,21 +546,26 @@ export default function Home({ address }) {
   const [magmaVolume, setmagmaVolume] = useState(null);
   const [bnbPrice, setBnbPrice] = useState(null);
   const [magmaPrice, setmagmaPrice] = useState(null);
+  const [ltcPrice, setLtcPrice]= useState(null);
 
 
   useEffect(() => {
-    // getmagmaVolume().then(res => {
-    //   setmagmaVolume(res);
-    // });
+    getmagmaVolume().then(res => {
+      setmagmaVolume(res);
+    });
 
     getBnbPrice().then(res => {
       setBnbPrice(res);
-
     });
 
-    getmagmaPrice().then(res => {
-      setmagmaPrice(res);
+    getLtcPrice().then(res => {
+      console.log(res)
+      setLtcPrice(res);
     });
+
+    // getmagmaPrice().then(res => {
+    //   setmagmaPrice(res);
+    // });
 
 
 
@@ -568,12 +584,12 @@ export default function Home({ address }) {
 
   useEffect(() => {
     getTotalDistribution().then(res => {
-      const bnbVal = res / 1e18;
-      setTotalDividentDistributed((bnbVal).toFixed(2));
-      setTotalDividentDistributedUSD((bnbVal * bnbPrice).toFixed(2));
+      const val = res / 1e18;
+      setTotalDividentDistributed((val).toFixed(2));
+      setTotalDividentDistributedUSD((val * ltcPrice).toFixed(2));
 
     });
-  }, bnbPrice);
+  }, ltcPrice);
 
 
   // const earningsInDollars = magmaVolume == 0 ? (holdings / 1000000000) * 220000 : (holdings / 1000000000) * (magmaVolume * 0.11);
@@ -615,8 +631,8 @@ export default function Home({ address }) {
 
             <div className="flex align-center justify-between	 ">
 
-              <h1 className="text-4xl font-semibold text-black dark:text-white  mb-4 items-center flex">MAGMA Earnings Manager</h1>
-              <img className="w-42 h-32 mb-4 mt-4" src="/logo.png" />
+              <h1 className="text-4xl font-semibold text-black dark:text-white  mb-4 items-center flex">BigMag Earnings Manager</h1>
+              <img className="w-32 h-24 mb-4 mt-4" src="/logo.png" />
 
 
             </div>
@@ -625,7 +641,7 @@ export default function Home({ address }) {
                 <div className="p-4 flex items-center">
 
                   <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Your MagmaHoldings</p>
+                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Your BigMag Holdings</p>
                     <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">{`${numberWithCommas(holdings)}`}</p>
                   </div>
                 </div>
@@ -634,7 +650,7 @@ export default function Home({ address }) {
                 <div className="p-4 flex items-center">
 
                   <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Total BNB Paid</p>
+                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Total LTC Paid</p>
                     <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">{`${(paid / 1e18).toFixed(4)}`}</p>
                   </div>
                 </div>
@@ -664,10 +680,10 @@ export default function Home({ address }) {
                 <div className="p-4 flex flex-col text-center items-center">
 
                   <img className="w-32 h-32 mb-4 mt-4" src="/bnb.png" />
-                  <p className="mt-4 font-semibold text-gray-600 dark:text-gray-300 text-3xl text-center">Total Paid To Magma Holders</p>
+                  <p className="mt-4 font-semibold text-gray-600 dark:text-gray-300 text-3xl text-center">Total Paid To Holders</p>
                   <p className="text-green-400 dark:text-green-400 text-4xl md:text-6xl text-center mb-8">
                     {totalDividentDistributed}
-                    <span className="text-yellow-300">BNB</span>
+                    <span className="text-yellow-300">LTC</span>
                     <br />
                     =${totalDividentDistributedUSD}
                   </p>
