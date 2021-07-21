@@ -632,7 +632,7 @@ export default function Home({ address }) {
             <div className="flex align-center justify-between	 ">
 
               <h1 className="text-4xl font-semibold text-black dark:text-white  mb-4 items-center flex">BigMag Earnings Manager</h1>
-              <img className="w-32 h-24 mb-4 mt-4" src="/logo.png" />
+              <img width="160" height="160" className=" mb-4 mt-4" src="/logo.png" />
 
 
             </div>
