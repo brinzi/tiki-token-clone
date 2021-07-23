@@ -16,7 +16,7 @@ function MyApp({ Component, pageProps }) {
     if (!address) {
       dispatch({
         type: 'UPDATE_ADDRESS',
-        payload: window.ethereum && window.ethereum.selectedAddress
+        payload: localStorage.getItem('address')
       });
     }
   }, []);
