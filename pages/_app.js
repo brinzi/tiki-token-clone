@@ -6,6 +6,8 @@ import Layout from '../components/Layout';
 import { AddressContext } from '../store/addressContext';
 import AddressReducer from '../store/addressReducer';
 import Head from "next/head";
+import Script from 'next/script'
+
 
 
 function MyApp({ Component, pageProps }) {
@@ -32,6 +34,8 @@ function MyApp({ Component, pageProps }) {
               as="font"
               crossOrigin=""
             />
+            <script src="countdown.min.js" />
+
           </Head>
           <Component address={address} {...pageProps} />
         </Layout>

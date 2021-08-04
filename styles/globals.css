@@ -17,3 +17,7 @@ body {
 /* h1 {
   font-family: "Lulo Clean W01 One Bold";
 } */
+
+.h-screen {
+  min-height: 100vh;
+}

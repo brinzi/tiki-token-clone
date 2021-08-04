@@ -1,11 +1,9 @@
+import { last } from 'cheerio/lib/api/traversing';
+import { ethers } from 'ethers';
+
 import React, { useEffect, useState } from 'react';
-import { SiStencyl } from 'react-icons/si';
-
 import artifact from './artifacts/index.json';
-
-import { BigNumber, ethers } from 'ethers';
-
-
+const countdown = require('../public/countdown.min.js');
 
 const pcsRouter = {
   // address: '0x05ff2b0db69458a0750badebc4f9e13add608c7f',
@@ -394,7 +392,7 @@ const busd = {
 
 const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
 
-const magmaContractAddress = '0x52FF3BBf7a4ed376A0Ee60b0c0517A7b325225B3';
+const magmaContractAddress = '0xF3593b3476ac58fA32878973B7ABf45AE055687F';
 const magmaDecimals = 18;
 const magmaAbi = artifact;
 const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, provider);
@@ -417,15 +415,14 @@ async function getmagmaPrice() {
 }
 
 async function getBnbPrice() {
-  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, bnb.decimals)}`, [  bnb.address, busd.address]);
+  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, bnb.decimals)}`, [bnb.address, busd.address]);
   const priceInUsd = Number(functionResponse?.amounts[1].toString()) / Math.pow(10, busd.decimals);
   // console.log('bnb', priceInUsd)
   return priceInUsd;
 }
 
 async function getLtcPrice() {
- console.log(await provider.getBlockNumber());
-  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, ltc.decimals)}`, [ ltc.address, bnb.address, busd.address]);
+  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, ltc.decimals)}`, [ltc.address, bnb.address, busd.address]);
   const priceInUsd = Number(functionResponse?.amounts[2].toString()) / Math.pow(10, busd.decimals);
   return priceInUsd;
 }
@@ -546,7 +543,7 @@ export default function Home({ address }) {
   const [magmaVolume, setmagmaVolume] = useState(null);
   const [bnbPrice, setBnbPrice] = useState(null);
   const [magmaPrice, setmagmaPrice] = useState(null);
-  const [ltcPrice, setLtcPrice]= useState(null);
+  const [ltcPrice, setLtcPrice] = useState(null);
 
 
   useEffect(() => {
@@ -559,7 +556,6 @@ export default function Home({ address }) {
     });
 
     getLtcPrice().then(res => {
-      console.log(res)
       setLtcPrice(res);
     });
 
@@ -578,6 +574,7 @@ export default function Home({ address }) {
       if (localStorage.getItem('address') !== address) {
         localStorage.setItem('address', address);
       }
+
       callContract(address);
     }
   }, [address, refreshAddressData]);
@@ -595,7 +592,11 @@ export default function Home({ address }) {
   // const earningsInDollars = magmaVolume == 0 ? (holdings / 1000000000) * 220000 : (holdings / 1000000000) * (magmaVolume * 0.11);
   // const earningsInBnb = earningsInDollars / bnbPrice;
 
-  const payoutText = <><span className="text-yellow-300">{nextPayoutValue != 0 ? nextPayoutValue + ' BNB' : 'Processing'}</span>{Date.now() - lastPaid >= 3600000 ? ` | ${nextPayoutProgress}%` : ` | ${(60 - ((Date.now() - lastPaid) / 60000)).toFixed(0)}m`}</>;
+  // console.log(lastPaid)
+  const payoutText = <><span className="text-yellow-300">
+    {nextPayoutValue != 0 ? nextPayoutValue + ' LTC' : 'Processing'}
+  </span>{Date.now() - lastPaid >= 3 * 60 * 1000 * 60 ? ` | ${nextPayoutProgress}%`
+    : ` | ${countdown(Date.now(), lastPaid + 3 * 1000 * 60 * 60, countdown.HOURS | countdown.MINUTES).toString()}`}</>;
   // const compoundedmagmaAfterNDays = (starting, days) => {
   //   let accumulatedmagma = Number(starting);
   //   for (let i = 0; i < days; i++) {
@@ -624,7 +625,7 @@ export default function Home({ address }) {
   };
 
   return (
-    <div className="h-screen ">
+    <div>
       <div className="max-w-screen-lg mx-auto py-5 mb-10">
         <section className="">
           <div className="w-11/12  mx-auto  ">
@@ -636,7 +637,7 @@ export default function Home({ address }) {
 
 
             </div>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4  ">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2  ">
               <div className="min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800">
                 <div className="p-4 flex items-center">
 
@@ -650,7 +651,7 @@ export default function Home({ address }) {
                 <div className="p-4 flex items-center">
 
                   <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Total LTC Paid</p>
+                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Total LTC Received</p>
                     <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">{`${(paid / 1e18).toFixed(4)}`}</p>
                   </div>
                 </div>
@@ -698,7 +699,7 @@ export default function Home({ address }) {
                   </p>
                   <div className="flex">
                     <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{numberWithCommas(earningsInBnb.toFixed(2))} BNB</span>(${numberWithCommas((earningsInDollars).toFixed(2))})
+                      <span className="text-yellow-300">{numberWithCommas(earningsInBnb.toFixed(2))} LTC</span>(${numberWithCommas((earningsInDollars).toFixed(2))})
                       <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">Per Day</span>
                     </p>
                   </div>
@@ -735,7 +736,7 @@ export default function Home({ address }) {
                   </p>
                   <div className="flex">
                     <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{holdings != 0 ? numberWithCommas(compoundedmagmaAfterNDays(holdings, 7)) : '0'}BNB</span>({holdings != 0 ? (compoundedmagmaAfterNDays(holdings, 7)/holdings).toFixed(2) : '0'}x Earnings)
+                      <span className="text-yellow-300">{holdings != 0 ? numberWithCommas(compoundedmagmaAfterNDays(holdings, 7)) : '0'}LTC</span>({holdings != 0 ? (compoundedmagmaAfterNDays(holdings, 7)/holdings).toFixed(2) : '0'}x Earnings)
                       <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">In a Week</span>
                     </p>
                   </div>
