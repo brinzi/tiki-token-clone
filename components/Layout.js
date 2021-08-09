@@ -8,7 +8,7 @@ export default function Layout({ children, dispatch, address }) {
 
 
   return (
-    <div className={modep ? "dark h-screen" : " h-screen"}>
+    <div className={modep ? "dark" : ""}>
       <div className="flex  bg-gray-50 dark:bg-gray-900 ">
         {/* <div className={`z-30 flex-shrink-0  w-64  bg-white dark:bg-gray-800 fixed lg:block h-screen  lg:relative -mt-11 top-10 transition-all duration-1000  ${sidebarp?" lg:left-0 left-0 ":"lg:left-0 -left-96"}`}>
           <Aside setsidebarp={setsidebarp} />

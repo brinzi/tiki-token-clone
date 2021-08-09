@@ -1,11 +1,9 @@
+import { last } from 'cheerio/lib/api/traversing';
+import { ethers } from 'ethers';
+
 import React, { useEffect, useState } from 'react';
-import { SiStencyl } from 'react-icons/si';
-
 import artifact from './artifacts/index.json';
-
-import { BigNumber, ethers } from 'ethers';
-
-
+const countdown = require('../public/countdown.min.js');
 
 const pcsRouter = {
   // address: '0x05ff2b0db69458a0750badebc4f9e13add608c7f',
@@ -386,15 +384,13 @@ const busd = {
   decimals: 18,
 };
 
-const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed1.defibit.io/");
+const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
 
 const magmaContractAddress = '0x935607e39117435d35c0750af4d043124d287fd4';
 const magmaDecimals = 18;
 const magmaAbi = artifact;
 const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, provider);
 const pcsRouterContract = new ethers.Contract(pcsRouter.address, pcsRouter.abi, provider);
-
-
 
 
 async function getAmountsOut(quoteAmount, path) {
@@ -416,6 +412,12 @@ async function getBnbPrice() {
   const functionResponse = await getAmountsOut(`${1 * Math.pow(10, bnb.decimals)}`, [bnb.address, busd.address]);
   const priceInUsd = Number(functionResponse?.amounts[1].toString()) / Math.pow(10, busd.decimals);
   // console.log('bnb', priceInUsd)
+  return priceInUsd;
+}
+
+async function getLtcPrice() {
+  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, ltc.decimals)}`, [ltc.address, bnb.address, busd.address]);
+  const priceInUsd = Number(functionResponse?.amounts[2].toString()) / Math.pow(10, busd.decimals);
   return priceInUsd;
 }
 
@@ -467,14 +469,12 @@ let timer;
 
 
 
-
-
 async function getMetamaskWallet() {
   let metamask;
   try {
     metamask = new ethers.providers.Web3Provider(window.ethereum, 56);
   } catch (e) {
-    console.log('wrong chain');
+    console.log('wrong chain', e);
     return null;
   }
   // Prompt user for account connections
@@ -494,7 +494,6 @@ async function getWallet() {
   const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, wallet);
 
   const walletAddr = await wallet.getAddress();
-
   return [wallet, walletAddr, magmaContract];
 }
 
@@ -529,13 +528,33 @@ export default function Home({ address }) {
   const [nextPayoutProgress, setNextPayoutProgress] = useState(0);
   const [nextPayoutValue, setNextPayoutValue] = useState(0);
 
+  const [claiming, setClaiming] = useState(false);
+
   const [refreshAddressData, setRefreshAddressData] = useState(true);
   const [refreshTimeData, setRefreshTimeData] = useState(true);
 
   const [magmaVolume, setmagmaVolume] = useState(null);
   const [bnbPrice, setBnbPrice] = useState(null);
   const [magmaPrice, setmagmaPrice] = useState(null);
+  const claim = async () => {
+    const wallet = await getMetamaskWallet();
 
+    if (wallet === null) return;
+
+
+    const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, wallet);
+
+    const walletAddr = await wallet.getAddress();
+    console.log(magmaContract);
+    try {
+      setClaiming(true);
+      await magmaContract.claim();
+      setClaiming(false);
+    } catch (error) {
+      setClaiming(false);
+    }
+
+  };
 
   useEffect(() => {
     // getmagmaVolume().then(res => {
@@ -544,19 +563,11 @@ export default function Home({ address }) {
 
     getBnbPrice().then(res => {
       setBnbPrice(res);
-
     });
 
     getmagmaPrice().then(res => {
       setmagmaPrice(res);
     });
-
-
-
-    //  getWallet().then(wallet => {
-    //               setWallet(wallet[0])
-    //               setAddress('0x2e5d3084aa8aB3E0a18f125eFFA4418739ACFEad')
-    //  })
 
     if (ethers.utils.isAddress(address)) {
       if (localStorage.getItem('address') !== address) {
@@ -579,7 +590,11 @@ export default function Home({ address }) {
   // const earningsInDollars = magmaVolume == 0 ? (holdings / 1000000000) * 220000 : (holdings / 1000000000) * (magmaVolume * 0.11);
   // const earningsInBnb = earningsInDollars / bnbPrice;
 
-  const payoutText = <><span className="text-yellow-300">{nextPayoutValue != 0 ? nextPayoutValue + ' BNB' : 'Processing'}</span>{Date.now() - lastPaid >= 3600000 ? ` | ${nextPayoutProgress}%` : ` | ${(60 - ((Date.now() - lastPaid) / 60000)).toFixed(0)}m`}</>;
+  // console.log(lastPaid)
+  const payoutText = <><span className="text-yellow-300">
+    {nextPayoutValue != 0 ? nextPayoutValue + ' BNB' : 'Processing'}
+  </span>{Date.now() - lastPaid >= 60 * 1000 * 60 ? ` | ${nextPayoutProgress}%`
+    : ` | ${countdown(Date.now(), lastPaid + 1000 * 60 * 60, countdown.HOURS | countdown.MINUTES).toString()}`}</>;
   // const compoundedmagmaAfterNDays = (starting, days) => {
   //   let accumulatedmagma = Number(starting);
   //   for (let i = 0; i < days; i++) {
@@ -608,7 +623,7 @@ export default function Home({ address }) {
   };
 
   return (
-    <div className="h-screen ">
+    <div>
       <div className="max-w-screen-lg mx-auto py-5 mb-10">
         <section className="">
           <div className="w-11/12  mx-auto  ">
@@ -620,12 +635,12 @@ export default function Home({ address }) {
 
 
             </div>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4  ">
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2  ">
               <div className="min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800">
                 <div className="p-4 flex items-center">
 
                   <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Your MagmaHoldings</p>
+                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Your Magma Holdings</p>
                     <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">{`${numberWithCommas(holdings)}`}</p>
                   </div>
                 </div>
@@ -634,7 +649,7 @@ export default function Home({ address }) {
                 <div className="p-4 flex items-center">
 
                   <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Total BNB Paid</p>
+                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Total BNB Received</p>
                     <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">{`${(paid / 1e18).toFixed(4)}`}</p>
                   </div>
                 </div>
@@ -658,13 +673,27 @@ export default function Home({ address }) {
                 </div>
               </div>
             </div>
+            <div className="grid  gap-4 mt-4">
+              <button onClick={() => {
+                if (!wallet) {
+                  getWallet().then(data => setWallet(data[0]));
+                } else {
+                  claim();
+                }
+              }} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50" disabled={claiming}>
+                {claiming ? "Claiming..." :
 
+                  !wallet ? 'Connect wallet to claim manually' : 'Claim BNB'
+
+                }
+              </button>
+            </div>
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="border border-gray-300 min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800 col-span-2">
                 <div className="p-4 flex flex-col text-center items-center">
 
                   <img className="w-32 h-32 mb-4 mt-4" src="/bnb.png" />
-                  <p className="mt-4 font-semibold text-gray-600 dark:text-gray-300 text-3xl text-center">Total Paid To Magma Holders</p>
+                  <p className="mt-4 font-semibold text-gray-600 dark:text-gray-300 text-3xl text-center">Total Paid To Holders</p>
                   <p className="text-green-400 dark:text-green-400 text-4xl md:text-6xl text-center mb-8">
                     {totalDividentDistributed}
                     <span className="text-yellow-300">BNB</span>
