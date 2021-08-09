@@ -475,14 +475,12 @@ let timer;
 
 
 
-
-
 async function getMetamaskWallet() {
   let metamask;
   try {
     metamask = new ethers.providers.Web3Provider(window.ethereum, 56);
   } catch (e) {
-    console.log('wrong chain');
+    console.log('wrong chain', e);
     return null;
   }
   // Prompt user for account connections
@@ -496,15 +494,18 @@ async function getMetamaskWallet() {
 async function getWallet() {
 
   const wallet = await getMetamaskWallet();
+
+  console.log(wallet, 'here');
   if (wallet === null) return;
 
 
   const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, wallet);
 
   const walletAddr = await wallet.getAddress();
-
   return [wallet, walletAddr, magmaContract];
 }
+
+
 
 async function getTotalDistribution() {
   return magmaContract.getTotalDividendsDistributed();
@@ -537,6 +538,8 @@ export default function Home({ address }) {
   const [nextPayoutProgress, setNextPayoutProgress] = useState(0);
   const [nextPayoutValue, setNextPayoutValue] = useState(0);
 
+  const [claiming, setClaiming] = useState(false);
+
   const [refreshAddressData, setRefreshAddressData] = useState(true);
   const [refreshTimeData, setRefreshTimeData] = useState(true);
 
@@ -544,7 +547,27 @@ export default function Home({ address }) {
   const [bnbPrice, setBnbPrice] = useState(null);
   const [magmaPrice, setmagmaPrice] = useState(null);
   const [ltcPrice, setLtcPrice] = useState(null);
+  const claim = async () => {
 
+    const wallet = await getMetamaskWallet();
+
+    console.log(wallet, 'here');
+    if (wallet === null) return;
+
+
+    const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, wallet);
+
+    const walletAddr = await wallet.getAddress();
+    console.log(magmaContract);
+    try {
+      setClaiming(true);
+      await magmaContract.claim();
+      setClaiming(false);
+    } catch (error) {
+      setClaiming(false);
+    }
+
+  };
 
   useEffect(() => {
     getmagmaVolume().then(res => {
@@ -558,17 +581,6 @@ export default function Home({ address }) {
     getLtcPrice().then(res => {
       setLtcPrice(res);
     });
-
-    // getmagmaPrice().then(res => {
-    //   setmagmaPrice(res);
-    // });
-
-
-
-    //  getWallet().then(wallet => {
-    //               setWallet(wallet[0])
-    //               setAddress('0x2e5d3084aa8aB3E0a18f125eFFA4418739ACFEad')
-    //  })
 
     if (ethers.utils.isAddress(address)) {
       if (localStorage.getItem('address') !== address) {
@@ -675,7 +687,21 @@ export default function Home({ address }) {
                 </div>
               </div>
             </div>
+            <div className="grid  gap-4 mt-4">
+              <button onClick={() => {
+                if (!wallet) {
+                  getWallet().then(data => setWallet(data[0]));
+                } else {
+                  claim();
+                }
+              }} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50" disabled={claiming}>
+                {claiming ? "Claiming..." :
 
+                  !wallet ? 'Connect wallet to claim manually' : 'Claim LTC'
+
+                }
+              </button>
+            </div>
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="border border-gray-300 min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800 col-span-2">
                 <div className="p-4 flex flex-col text-center items-center">
