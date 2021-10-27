@@ -21,3 +21,30 @@ body {
 .h-screen {
   min-height: 100vh;
 }
+
+.video-container {
+  min-height: 100vh;
+  background-color: #22376f;
+  width: 100%;
+  position: fixed;
+  z-index: -1;
+}
+#background-video {
+  /* height: 100%; */
+  width: 100%;
+  float: left;
+  top: 0;
+  z-index: -1;
+  padding: none;
+  min-height: 311px;
+  margin-top: -2%;
+  position: fixed; /* optional depending on what you want to do in your app */
+}
+
+.bg-custom {
+  background-color: #0d1431e0;
+}
+
+.margin-stats {
+  margin-top: 3.5rem;
+}

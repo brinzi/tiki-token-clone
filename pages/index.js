@@ -375,8 +375,8 @@ const pcsRouter = {
     { stateMutability: 'payable', type: 'receive' },
   ],
 };
-const ltc = {
-  address: '0x4338665cbb7b2485a8855a139b75d5e34ab0db94',
+const usdt = {
+  address: '0x55d398326f99059ff775485246999027b3197955',
   decimals: 18,
 };
 
@@ -392,7 +392,7 @@ const busd = {
 
 const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
 
-const magmaContractAddress = '0xF3593b3476ac58fA32878973B7ABf45AE055687F';
+const magmaContractAddress = '0xC8840c4aD6124d731Ac1C3786D5eeB4953ab3868';
 const magmaDecimals = 18;
 const magmaAbi = artifact;
 const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, provider);
@@ -421,10 +421,8 @@ async function getBnbPrice() {
   return priceInUsd;
 }
 
-async function getLtcPrice() {
-  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, ltc.decimals)}`, [ltc.address, bnb.address, busd.address]);
-  const priceInUsd = Number(functionResponse?.amounts[2].toString()) / Math.pow(10, busd.decimals);
-  return priceInUsd;
+async function getUSDTPrice() {
+  return 1;
 }
 
 
@@ -546,19 +544,17 @@ export default function Home({ address }) {
   const [magmaVolume, setmagmaVolume] = useState(null);
   const [bnbPrice, setBnbPrice] = useState(null);
   const [magmaPrice, setmagmaPrice] = useState(null);
-  const [ltcPrice, setLtcPrice] = useState(null);
+  const [usdtPrice, setUSDTPrice] = useState(null);
   const claim = async () => {
 
     const wallet = await getMetamaskWallet();
-
-    console.log(wallet, 'here');
     if (wallet === null) return;
 
 
     const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, wallet);
 
     const walletAddr = await wallet.getAddress();
-    console.log(magmaContract);
+    // console.log(magmaContract);
     try {
       setClaiming(true);
       await magmaContract.claim();
@@ -578,8 +574,8 @@ export default function Home({ address }) {
       setBnbPrice(res);
     });
 
-    getLtcPrice().then(res => {
-      setLtcPrice(res);
+    getUSDTPrice().then(res => {
+      setUSDTPrice(res);
     });
 
     if (ethers.utils.isAddress(address)) {
@@ -595,20 +591,22 @@ export default function Home({ address }) {
     getTotalDistribution().then(res => {
       const val = res / 1e18;
       setTotalDividentDistributed((val).toFixed(2));
-      setTotalDividentDistributedUSD((val * ltcPrice).toFixed(2));
+      setTotalDividentDistributedUSD((val * usdtPrice).toFixed(2));
 
     });
-  }, ltcPrice);
+  }, []);
 
 
   // const earningsInDollars = magmaVolume == 0 ? (holdings / 1000000000) * 220000 : (holdings / 1000000000) * (magmaVolume * 0.11);
   // const earningsInBnb = earningsInDollars / bnbPrice;
 
   // console.log(lastPaid)
-  const payoutText = <><span className="text-yellow-300">
-    {nextPayoutValue != 0 ? nextPayoutValue + ' LTC' : 'Processing'}
-  </span>{Date.now() - lastPaid >= 3 * 60 * 1000 * 60 ? ` | ${nextPayoutProgress}%`
-    : ` | ${countdown(Date.now(), lastPaid + 3 * 1000 * 60 * 60, countdown.HOURS | countdown.MINUTES).toString()}`}</>;
+  const payoutText = <>
+    <span className="text-blue-300">
+      {nextPayoutValue != 0 ? nextPayoutValue + ' USDT' : 'Processing'}
+    </span>
+    {Date.now() - lastPaid >= 3 * 60 * 1000 * 60 ? ` | ${nextPayoutProgress}%`
+      : ` | ${countdown(Date.now(), lastPaid + 3 * 1000 * 60 * 60, countdown.HOURS | countdown.MINUTES).toString()}`}</>;
   // const compoundedmagmaAfterNDays = (starting, days) => {
   //   let accumulatedmagma = Number(starting);
   //   for (let i = 0; i < days; i++) {
@@ -620,7 +618,8 @@ export default function Home({ address }) {
   const callContract = () => {
     magmaContract.getNumberOfDividendTokenHolders().then(holders => {
       magmaContract.balanceOf(address).then(balance => {
-        setHoldings((balance / 1e18).toFixed(0));
+        console.log((Number(balance.toString()) / 1e9));
+        setHoldings((Number(balance.toString()) / 1e9).toFixed(0));
         magmaContract.getAccountDividendsInfo(address).then(result => {
           provider.getBalance(address).then(balance => {
             setMagmaings((balance / 1e18).toFixed(4));
@@ -635,159 +634,102 @@ export default function Home({ address }) {
       });
     });
   };
-
+  ``;
   return (
     <div>
-      <div className="max-w-screen-lg mx-auto py-5 mb-10">
+      <div className="max-w-screen-lg mx-auto  mb-10">
         <section className="">
           <div className="w-11/12  mx-auto  ">
 
-            <div className="flex align-center justify-between	 ">
+            <div className="flex flex-col text-center align-center justify-between	items-center margin-stats mb-8">
+              <h1 className="text-5xl font-semibold text-black dark:text-white mt-4 mb-8 items-center flex">MagSwap Earnings</h1>
+              <div>
+                <button onClick={() => {
+                  if (!wallet) {
+                    getWallet().then(data => setWallet(data[0]));
+                  } else {
+                    claim();
+                  }
+                }} className="bg-transparent rounded-full border-2 border-blue text-white  py-2 px-4 disabled:text-gray" disabled={claiming}>
+                  {claiming ? "Claiming..." :
 
-              <h1 className="text-4xl font-semibold text-black dark:text-white  mb-4 items-center flex">BigMag Earnings Manager</h1>
-              <img width="160" height="160" className=" mb-4 mt-4" src="/logo.png" />
+                    !wallet ? 'Connect wallet to claim manually' : 'Claim USDT'
 
+                  }
+                </button>
 
-            </div>
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-2  ">
-              <div className="min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800">
-                <div className="p-4 flex items-center">
-
-                  <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Your BigMag Holdings</p>
-                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">{`${numberWithCommas(holdings)}`}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800">
-                <div className="p-4 flex items-center">
-
-                  <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Total LTC Received</p>
-                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">{`${(paid / 1e18).toFixed(4)}`}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800">
-                <div className="p-4 flex items-center">
-
-                  <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Last Payout Time</p>
-                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">{`${lastPaid === 0 ? 'Never' : TimeDifference(Date.now(), lastPaid)}`}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800">
-                <div className="p-4 flex items-center">
-
-                  <div>
-                    <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">Next Loading</p>
-                    <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">{payoutText}</p>
-                  </div>
-                </div>
+                {/* <button onClick={() => {
+                  if (!wallet) {
+                    getWallet().then(data => setWallet(data[0]));
+                  } else {
+                    claim();
+                  }
+                }} className="bg-transparent rounded-full border-2 border-blue text-white  py-2 px-4 disabled:text-gray" disabled={true}>
+                 Rewards are currently disabled
+                </button> */}
               </div>
             </div>
-            <div className="grid  gap-4 mt-4">
-              <button onClick={() => {
-                if (!wallet) {
-                  getWallet().then(data => setWallet(data[0]));
-                } else {
-                  claim();
-                }
-              }} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50" disabled={claiming}>
-                {claiming ? "Claiming..." :
+            <div className="grid gap-6 md:grid-cols-3 xl:grid-cols-3  md:h-80 text-center mt-4 ">
+              <div className="min-w-0 mt-4  rounded-lg  bg-custom">
+                <div className="p-4 mt-4 flex items-center justify-center text-center w-full">
 
-                  !wallet ? 'Connect wallet to claim manually' : 'Claim LTC'
-
-                }
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="border border-gray-300 min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800 col-span-2">
-                <div className="p-4 flex flex-col text-center items-center">
-
-                  <img className="w-32 h-32 mb-4 mt-4" src="/bnb.png" />
-                  <p className="mt-4 font-semibold text-gray-600 dark:text-gray-300 text-3xl text-center">Total Paid To Holders</p>
-                  <p className="text-green-400 dark:text-green-400 text-4xl md:text-6xl text-center mb-8">
-                    {totalDividentDistributed}
-                    <span className="text-yellow-300">LTC</span>
-                    <br />
-                    =${totalDividentDistributedUSD}
-                  </p>
+                  <div>
+                    <p className="mb-2 text-2xl font-medium text-gray-600 dark:text-gray-400">MagSwap <br /> Holdings</p>
+                    <p className="text-4xl  margin-stats text-gray-700 dark:text-gray-200">{`${numberWithCommas(holdings)}`}</p>
+                  </div>
                 </div>
               </div>
-              {/* 
-              <div className="border border-gray-300 min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800 col-span-2 lg:col-span-1">
-                <div className="p-4 flex flex-col text-center items-center">
-                  <img className="w-32 h-32 mb-4 mt-4" src="https://magmatoken.app/static/media/money.d301ec34.png" />
-                  <p className="mt-4 font-semibold text-gray-600 dark:text-gray-300 text-3xl text-center">
-                    Your {numberWithCommas(holdings)} Magma Earns:
-                  </p>
-                  <div className="flex">
-                    <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{numberWithCommas(earningsInBnb.toFixed(2))} LTC</span>(${numberWithCommas((earningsInDollars).toFixed(2))})
-                      <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">Per Day</span>
-                    </p>
+              <div className="min-w-0 mt-4 rounded-lg  bg-custom">
+                <div className="p-4 mt-4 flex items-center  justify-center text-center w-full">
+                  <div>
+                    <p className="mb-2 text-2xl font-medium text-gray-600 dark:text-gray-400">USDT <br /> Received</p>
+                    <p className="text-4xl margin-stats text-gray-700 dark:text-gray-200">{`${(paid / 1e18).toFixed(4)}`}</p>
                   </div>
-                  <div className="flex">
-                    <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{numberWithCommas((earningsInBnb*7).toFixed(2))}</span>(${numberWithCommas((earningsInDollars*7).toFixed(2))})
-                      <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">Per Week</span>
-                    </p>
-                  </div>
-                  <div className="flex">
-                    <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{numberWithCommas((earningsInBnb*30).toFixed(2))} </span>(${numberWithCommas((earningsInDollars*30).toFixed(2))})
-                      <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">Per Month</span>
-                    </p>
-                  </div>
-                  <div className="flex">
-                    <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{numberWithCommas((earningsInBnb*365).toFixed(2))}</span>(${numberWithCommas((earningsInDollars*365).toFixed(2))})
-                      <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">Per Year</span>
-                    </p>
-                  </div>
-                  <p className="text-gray-600 py-1 dark:text-gray-400 text-xl text-center -mt-2">Dynamic estimations based on 24h of trading volume 30,000
-                  </p>
                 </div>
-              </div> */}
+              </div>
+              <div className="min-w-0 mt-4 rounded-lg  bg-custom">
+                <div className="p-4 mt-4 flex items-center  justify-center text-center w-full">
 
-
-
-              {/* <div className="border border-gray-300 min-w-0 rounded-lg shadow-xs overflow-hidden bg-white dark:bg-gray-800 col-span-2 lg:col-span-1">
-                <div className="p-4 flex flex-col text-center items-center">
-                  <img className="w-32 h-32 mb-4 mt-4" src="https://magmatoken.app/static/media/money.d301ec34.png" />
-                  <p className="mt-4 font-semibold text-gray-600 dark:text-gray-300 text-3xl text-center">
-                    Your {numberWithCommas(holdings)} Magma Earns:
-                  </p>
-                  <div className="flex">
-                    <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{holdings != 0 ? numberWithCommas(compoundedmagmaAfterNDays(holdings, 7)) : '0'}LTC</span>({holdings != 0 ? (compoundedmagmaAfterNDays(holdings, 7)/holdings).toFixed(2) : '0'}x Earnings)
-                      <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">In a Week</span>
-                    </p>
+                  <div>
+                    <p className="mb-2 text-2xl font-medium text-gray-600 dark:text-gray-400">Last <br /> Payout</p>
+                    <p className="text-4xl  margin-stats text-gray-700 dark:text-gray-200">{`${lastPaid === 0 ? 'Never' : TimeDifference(Date.now(), lastPaid)}`}</p>
                   </div>
-                  <div className="flex">
-                    <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{holdings != 0 ? numberWithCommas(compoundedmagmaAfterNDays(holdings, 30)) : '0'}</span> ({holdings != 0 ? (compoundedmagmaAfterNDays(holdings, 30)/holdings).toFixed(2) : '0'}x Earnings)
-                      <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">In a Month</span>
-                    </p>
-                  </div>
-                  <div className="flex">
-                    <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{holdings != 0 ? numberWithCommas(compoundedmagmaAfterNDays(holdings, 182)) : '0'} </span>({holdings != 0 ? (compoundedmagmaAfterNDays(holdings, 182)/holdings).toFixed(2) : '0'}x Earnings)
-                      <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">In 6 Months</span>
-                    </p>
-                  </div>
-                  <div className="flex">
-                    <p className="text-green-400 dark:text-green-400 text-2xl text-center">
-                      <span className="text-yellow-300">{holdings != 0 ? numberWithCommas(compoundedmagmaAfterNDays(holdings, 365)) : '0'}</span>({holdings != 0 ? (compoundedmagmaAfterNDays(holdings, 365)/holdings).toFixed(2) : '0'}x Earnings)
-                      <span className="text-gray-600 dark:text-gray-400 text-xl text-center ml-2 mt-2">In 1 Year</span>
-                    </p>
-                  </div>
-                  <p className="text-gray-600 py-1 dark:text-gray-400 text-xl text-center -mt-2">Estimations are based on current Magmaprice (${magmaPrice?.toFixed(6)})
-                  </p>
                 </div>
-              </div> */}
+              </div>
+
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 margin-stats">
+              <div className=" min-w-0 mt-4 rounded-lg   col-span-2">
+                <div className=" mt-4 flex flex-col text-center items-center">
+                  <div className="relative pt-1 w-full">
+                    <div className="flex mb-2 items-center justify-between">
+                      <div>
+                        <span className="  inline-block py-1 px-2  rounded-full text-white bg-trasparent">
+                          Next Loading
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="  inline-block text-blue-600">
+                          {payoutText}
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ height: '5px' }} className="overflow-hidden  mb-4 text-xs flex rounded-full bg-custom">
+                      <div style={{ width: nextPayoutProgress + '%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"></div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              {/* <img className="w-32 h-32 mb-4 margin-stats" src="/bnb.png" /> */}
+              <p className="margin-stats  text-gray-600 dark:text-gray-300 text-4xl text-5xl text-center">Total Paid To Holders</p>
+              <p className=" break-all  text-green-400 dark:text-green-400 text-4xl md:text-5xl text-center mb-8">
+                {totalDividentDistributed}
+                <span className="text-yellow-300">USDT</span>
+              </p>
             </div>
           </div>
         </section>
