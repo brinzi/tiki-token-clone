@@ -375,8 +375,9 @@ const pcsRouter = {
     { stateMutability: 'payable', type: 'receive' },
   ],
 };
-const usdt = {
-  address: '0x55d398326f99059ff775485246999027b3197955',
+};
+const ltc = {
+  address: '0x4338665cbb7b2485a8855a139b75d5e34ab0db94',
   decimals: 18,
 };
 
@@ -390,10 +391,11 @@ const busd = {
   decimals: 18,
 };
 
+
 const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
 
 const magmaContractAddress = '0xC8840c4aD6124d731Ac1C3786D5eeB4953ab3868';
-const magmaDecimals = 18;
+const magmaDecimals = 9;
 const magmaAbi = artifact;
 const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, provider);
 const pcsRouterContract = new ethers.Contract(pcsRouter.address, pcsRouter.abi, provider);
@@ -421,7 +423,7 @@ async function getBnbPrice() {
   return priceInUsd;
 }
 
-async function getUSDTPrice() {
+async function getCoinPricePrice() {
   return 1;
 }
 
@@ -554,7 +556,6 @@ export default function Home({ address }) {
     const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, wallet);
 
     const walletAddr = await wallet.getAddress();
-    // console.log(magmaContract);
     try {
       setClaiming(true);
       await magmaContract.claim();
@@ -574,9 +575,6 @@ export default function Home({ address }) {
       setBnbPrice(res);
     });
 
-    getUSDTPrice().then(res => {
-      setUSDTPrice(res);
-    });
 
     if (ethers.utils.isAddress(address)) {
       if (localStorage.getItem('address') !== address) {
@@ -602,8 +600,8 @@ export default function Home({ address }) {
 
   // console.log(lastPaid)
   const payoutText = <>
-    <span className="text-blue-300">
-      {nextPayoutValue != 0 ? nextPayoutValue + ' USDT' : 'Processing'}
+    <span >
+      {nextPayoutValue != 0 ? nextPayoutValue + ' DOGE' : 'Processing'}
     </span>
     {Date.now() - lastPaid >= 3 * 60 * 1000 * 60 ? ` | ${nextPayoutProgress}%`
       : ` | ${countdown(Date.now(), lastPaid + 3 * 1000 * 60 * 60, countdown.HOURS | countdown.MINUTES).toString()}`}</>;
@@ -642,7 +640,7 @@ export default function Home({ address }) {
           <div className="w-11/12  mx-auto  ">
 
             <div className="flex flex-col text-center align-center justify-between	items-center margin-stats mb-8">
-              <h1 className="text-5xl font-semibold text-black dark:text-white mt-4 mb-8 items-center flex">MagSwap Earnings</h1>
+              <h1 className="text-5xl font-semibold text-brown mt-4 mb-8 items-center flex">BabyMetaDoge Earnings</h1>
               <div>
                 <button onClick={() => {
                   if (!wallet) {
@@ -650,10 +648,10 @@ export default function Home({ address }) {
                   } else {
                     claim();
                   }
-                }} className="bg-transparent rounded-full border-2 border-blue text-white  py-2 px-4 disabled:text-gray" disabled={claiming}>
+                }} className="bg-brown rounded-full  border-orange  py-2 px-4 disabled:text-gray" style={{fontSize: '1.5rem'}} disabled={claiming}>
                   {claiming ? "Claiming..." :
 
-                    !wallet ? 'Connect wallet to claim manually' : 'Claim USDT'
+                    !wallet ? 'Connect to Claim' : 'Claim DOGE'
 
                   }
                 </button>
@@ -664,35 +662,34 @@ export default function Home({ address }) {
                   } else {
                     claim();
                   }
-                }} className="bg-transparent rounded-full border-2 border-blue text-white  py-2 px-4 disabled:text-gray" disabled={true}>
+                }} className="bg-transparent rounded-full border-2 border-orange text-white  py-2 px-4 disabled:text-gray" disabled={true}>
                  Rewards are currently disabled
                 </button> */}
               </div>
             </div>
             <div className="grid gap-6 md:grid-cols-3 xl:grid-cols-3  md:h-80 text-center mt-4 ">
-              <div className="min-w-0 mt-4  rounded-lg  bg-custom">
+              <div className="min-w-0 mt-4  rounded-lg shadow-custom">
                 <div className="p-4 mt-4 flex items-center justify-center text-center w-full">
-
                   <div>
-                    <p className="mb-2 text-2xl font-medium text-gray-600 dark:text-gray-400">MagSwap <br /> Holdings</p>
-                    <p className="text-4xl  margin-stats text-gray-700 dark:text-gray-200">{`${numberWithCommas(holdings)}`}</p>
+                    <p className="mb-2 text-2xl font-medium ">BabyMetaDoge <br /> Holdings</p>
+                    <p className="text-4xl  margin-stats text-brown">{`${numberWithCommas(holdings)}`}</p>
                   </div>
                 </div>
               </div>
-              <div className="min-w-0 mt-4 rounded-lg  bg-custom">
+              <div className="min-w-0 mt-4 rounded-lg shadow-custom">
                 <div className="p-4 mt-4 flex items-center  justify-center text-center w-full">
                   <div>
-                    <p className="mb-2 text-2xl font-medium text-gray-600 dark:text-gray-400">USDT <br /> Received</p>
-                    <p className="text-4xl margin-stats text-gray-700 dark:text-gray-200">{`${(paid / 1e18).toFixed(4)}`}</p>
+                    <p className="mb-2 text-2xl font-medium ">DOGE <br /> Received</p>
+                    <p className="text-4xl margin-stats text-brown">{`${(paid / 1e18).toFixed(4)}`}</p>
                   </div>
                 </div>
               </div>
-              <div className="min-w-0 mt-4 rounded-lg  bg-custom">
+              <div className="min-w-0 mt-4 rounded-lg shadow-custom">
                 <div className="p-4 mt-4 flex items-center  justify-center text-center w-full">
 
                   <div>
-                    <p className="mb-2 text-2xl font-medium text-gray-600 dark:text-gray-400">Last <br /> Payout</p>
-                    <p className="text-4xl  margin-stats text-gray-700 dark:text-gray-200">{`${lastPaid === 0 ? 'Never' : TimeDifference(Date.now(), lastPaid)}`}</p>
+                    <p className="mb-2 text-2xl font-medium ">Last <br /> Payout</p>
+                    <p className="text-4xl  margin-stats text-brown">{`${lastPaid === 0 ? 'Never' : TimeDifference(Date.now(), lastPaid)}`}</p>
                   </div>
                 </div>
               </div>
@@ -705,31 +702,33 @@ export default function Home({ address }) {
                   <div className="relative pt-1 w-full">
                     <div className="flex mb-2 items-center justify-between">
                       <div>
-                        <span className="  inline-block py-1 px-2  rounded-full text-white bg-trasparent">
+                        <span className="  inline-block py-1 px-2  rounded-full  bg-trasparent">
                           Next Loading
                         </span>
                       </div>
                       <div className="text-right">
-                        <span className="  inline-block text-blue-600">
+                        <span className="  inline-block ">
                           {payoutText}
                         </span>
                       </div>
                     </div>
-                    <div style={{ height: '5px' }} className="overflow-hidden  mb-4 text-xs flex rounded-full bg-custom">
-                      <div style={{ width: nextPayoutProgress + '%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"></div>
+                    <div style={{ height: '5px' }} className="overflow-hidden  mb-4 text-xs flex shadow-custom">
+                      <div style={{ width: nextPayoutProgress + '%' }} className="shadow-none flex flex-col text-center whitespace-nowrap  justify-center bg-orange"></div>
                     </div>
 
                   </div>
                 </div>
               </div>
             </div>
-            <div>
-              {/* <img className="w-32 h-32 mb-4 margin-stats" src="/bnb.png" /> */}
-              <p className="margin-stats  text-gray-600 dark:text-gray-300 text-4xl text-5xl text-center">Total Paid To Holders</p>
-              <p className=" break-all  text-green-400 dark:text-green-400 text-4xl md:text-5xl text-center mb-8">
-                {totalDividentDistributed}
-                <span className="text-yellow-300">USDT</span>
-              </p>
+            <div className="flex justify-center">
+              <img className="w-32 h-32 mb-4 margin-stats" src="/doge.png" />
+              <div>
+                <p className="margin-stats text-4xl text-5xl text-center">Total Paid To Holders</p>
+                <p className=" break-all  text-brown text-4xl md:text-5xl text-center mb-8 mt-2">
+                  {totalDividentDistributed}
+                  <span className="text-yellow-300">DOGE</span>
+                </p>
+              </div>
             </div>
           </div>
         </section>
