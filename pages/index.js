@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import React, { useEffect, useState } from 'react';
 import artifact from './artifacts/token.json';
 import router from './artifacts/router.json';
+import divident from './artifacts/dividentdistribution.json';
 
 
 const countdown = require('../public/countdown.min.js');
@@ -29,10 +30,13 @@ const busd = {
 const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed1.defibit.io/");
 
 const magmaContractAddress = '0x24401cf6e48757adee23c50bbd9284379f154ef0';
+const dividentDistributeContract = '0xaA6FcB001391e5eA655ebF081F4b451f899c09B2';
+
 const magmaDecimals = 9;
 const magmaAbi = artifact;
 const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, provider);
 const pcsRouterContract = new ethers.Contract(pcsRouter.address, router, provider);
+const dividentContract = new ethers.Contract(dividentDistributeContract, divident, provider);
 
 
 async function getAmountsOut(quoteAmount, path) {
@@ -40,7 +44,14 @@ async function getAmountsOut(quoteAmount, path) {
     quoteAmount,
     path,
     { gasLimit: 1000000000000 }
-  );
+  ).catch(err => {
+    console.log(err);
+    return {
+      amounts: [
+        0, 0, 0
+      ]
+    };
+  });
 }
 
 async function getmagmaPrice() {
@@ -66,49 +77,6 @@ async function getDogePrice() {
 
 
 
-function TimeDifference(current, previous) {
-
-  var msPerMinute = 60 * 1000;
-  var msPerHour = msPerMinute * 60;
-  var msPerDay = msPerHour * 24;
-  var msPerMonth = msPerDay * 30;
-  var msPerYear = msPerDay * 365;
-
-  var elapsed = current - previous;
-
-  if (elapsed < msPerMinute) {
-    const secs = Math.round(elapsed / 1000);
-    return secs > 1 ? secs + ' Seconds Ago' : secs + ' Second Ago';
-  }
-
-  else if (elapsed < msPerHour) {
-    const mins = Math.round(elapsed / msPerMinute);
-    return mins > 1 ? mins + ' Minutes Ago' : mins + ' Minute Ago';
-  }
-
-  else if (elapsed < msPerDay) {
-    const hours = Math.round(elapsed / msPerHour);
-    return hours > 1 ? hours + ' Hours Ago' : hours + ' Hour Ago';
-  }
-
-  else if (elapsed < msPerMonth) {
-    return '~ ' + Math.round(elapsed / msPerDay) + ' days Ago';
-  }
-
-  else if (elapsed < msPerYear) {
-    return '~ ' + Math.round(elapsed / msPerMonth) + ' months Ago';
-  }
-
-  else {
-    return '~ ' + Math.round(elapsed / msPerYear) + ' years Ago';
-  }
-}
-
-let timer;
-
-
-
-
 async function getMetamaskWallet() {
   let metamask;
   try {
@@ -128,13 +96,10 @@ async function getMetamaskWallet() {
 async function getWallet() {
 
   const wallet = await getMetamaskWallet();
-
-  console.log(wallet, 'here');
   if (wallet === null) return;
 
 
   const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, wallet);
-
   const walletAddr = await wallet.getAddress();
   return [wallet, walletAddr, magmaContract];
 }
@@ -143,22 +108,20 @@ function numberWithCommas(x) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-async function getmagmaVolume() {
-  const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tiki-token&vs_currencies=usd&include_market_cap=false&include_24hr_vol=true&include_24hr_change=false&include_last_updated_at=false');
-  const resolved = await res.json();
-  const volume = resolved['tiki-token'].usd_24h_vol;
-  return volume;
-}
-
-
 
 export default function Home({ address }) {
 
   const [wallet, setWallet] = useState(null);
   const [holdings, setHoldings] = useState(0);
   const [claiming, setClaiming] = useState(false);
-
-  const [refreshAddressData, setRefreshAddressData] = useState(true);
+  const [pendingReward, setPendingReward] = useState(0);
+  const [minClaim, setMinClaim] = useState(0);
+  const [minPeriod, setMinPeriod] = useState(0);
+  const [paid, setPaid] = useState(0);
+  const [lastPaid, setLastPaid] = useState(0);
+  const [nextPayoutProgress, setNextPayoutProgress] = useState(0);
+  const [totalDividentDistributed, setTotalDividentDistributed] = useState(0);
+  const [totalDividentDistributedUSD, setTotalDividentDistributedUSD] = useState(0);
   const [magmaPrice, setmagmaPrice] = useState(0);
 
   const [totalSupply, setTotalSupply] = useState(0);
@@ -174,7 +137,7 @@ export default function Home({ address }) {
     const walletAddr = await wallet.getAddress();
     try {
       setClaiming(true);
-      await magmaContract.claim();
+      await dividentContract.claimDividend();
       setClaiming(false);
     } catch (error) {
       setClaiming(false);
@@ -198,25 +161,50 @@ export default function Home({ address }) {
 
       callContract(address);
     }
-  }, [address, refreshAddressData]);
+  }, [address]);
 
   useEffect(() => {
     setMarketCap(magmaPrice * totalSupply);
 
   }, [magmaPrice, totalSupply]);
 
+  useEffect(() => {
+    dividentContract.totalDistributed().then(res => {
+      const val = res / 1e18;
+      setTotalDividentDistributed((val).toFixed(2));
+      getDogePrice().then(price => {
+        setTotalDividentDistributedUSD((val * price).toFixed(2));
+      });
+    });
+  }, []);
 
+  useEffect(() => {
+    let percent = Math.min(pendingReward / minClaim, 1);
+    percent = (isNaN(percent) && percent) || 1;
+    setNextPayoutProgress((100 - percent * 100));
+
+  }, [pendingReward, minClaim,]);
   const callContract = () => {
+
+    dividentContract.shareholderClaims(address).then(data => setLastPaid(parseInt(data._hex, 16) * 1000));
+    dividentContract.shares(address).then(data => setPaid(parseInt(data.totalRealised._hex, 16)));
+    dividentContract.getUnpaidEarnings(address).then(data => console.log(data)|| setPendingReward(parseInt(data._hex, 16)));
+    dividentContract.minPeriod().then(data => setMinPeriod(parseInt(data, 16) * 1000));
+    dividentContract.minDistribution().then(data => setMinClaim(parseInt(data._hex, 16)));
+
+
     magmaContract.balanceOf(address).then(balance => {
       setHoldings((Number(balance.toString()) / 1e9).toFixed(0));
     });
-
-    magmaContract.getCirculatingSupply().then(supply => {
-      setTotalSupply(supply).toFixed(0);
-    });
-
-
   };
+
+  const payoutText = <>
+    <span >
+      {pendingReward != 0 ? pendingReward + ' DOGE' : 'Processing'}
+    </span>
+    {Date.now() - lastPaid >= minPeriod ? ` | ${nextPayoutProgress}%`
+      : ` | ${countdown(Date.now(), lastPaid + minPeriod, countdown.HOURS | countdown.MINUTES).toString()}`}</>;
+
   return (
     <div>
       <div className="max-w-screen-lg mx-auto  mb-10">
@@ -255,7 +243,7 @@ export default function Home({ address }) {
               <div className="min-w-0 mt-4  rounded-lg shadow-custom">
                 <div className="p-4 mt-4 flex items-center justify-center text-center w-full">
                   <div>
-                    <p className="mb-2 text-2xl font-medium ">Holdings</p>
+                    <p className="mb-2 text-2xl font-medium ">BabyMetaDoge <br /> Holdings</p>
                     <p className="text-4xl  margin-stats text-brown">{`${numberWithCommas(holdings)}`}</p>
                   </div>
                 </div>
@@ -263,8 +251,8 @@ export default function Home({ address }) {
               <div className="min-w-0 mt-4 rounded-lg shadow-custom">
                 <div className="p-4 mt-4 flex items-center  justify-center text-center w-full">
                   <div>
-                    <p className="mb-2 text-2xl font-medium ">Price</p>
-                    <p className="text-4xl margin-stats text-brown">${`${magmaPrice}`}</p>
+                    <p className="mb-2 text-2xl font-medium ">DOGE <br /> Received</p>
+                    <p className="text-4xl margin-stats text-brown">{`${(paid / 1e18).toFixed(4)}`}</p>
                   </div>
                 </div>
               </div>
@@ -272,15 +260,15 @@ export default function Home({ address }) {
                 <div className="p-4 mt-4 flex items-center  justify-center text-center w-full">
 
                   <div>
-                    <p className="mb-2 text-2xl font-medium ">MarketCap</p>
-                    <p className="text-4xl  margin-stats text-brown">${`${marketCap}`}</p>
+                    <p className="mb-2 text-2xl font-medium ">Last <br /> Payout</p>
+                    <p className="text-4xl  margin-stats text-brown">{`${lastPaid === 0 ? 'Never' : TimeDifference(Date.now(), lastPaid)}`}</p>
                   </div>
                 </div>
               </div>
 
             </div>
 
-            {/* <div className="grid grid-cols-2 gap-4 margin-stats">
+            <div className="grid grid-cols-2 gap-4 margin-stats">
               <div className=" min-w-0 mt-4 rounded-lg   col-span-2">
                 <div className=" mt-4 flex flex-col text-center items-center">
                   <div className="relative pt-1 w-full">
@@ -304,10 +292,10 @@ export default function Home({ address }) {
                 </div>
               </div>
             </div>
-            <div className="flex justify-center">
-              <img className="w-32 h-32 mb-4 margin-stats" src="/doge.png" />
+            <div className="flex justify-center grid  ">
+                <img className="w-32 h-32 mb-4 m-auto" src="/doge.png" />
               <div>
-                <p className="margin-stats text-4xl text-5xl text-center">Total Paid To Holders</p>
+                <p className="mt-2 text-4xl text-5xl text-center">Total Paid To Holders</p>
                 <p className=" break-all  text-brown text-4xl md:text-5xl text-center mb-8 mt-2">
                   {totalDividentDistributed}
                   <span className="text-orange">DOGE</span>
@@ -315,7 +303,7 @@ export default function Home({ address }) {
                   =${totalDividentDistributedUSD}
                 </p>
               </div>
-            </div> */}
+            </div>
           </div>
         </section>
 
@@ -324,4 +312,4 @@ export default function Home({ address }) {
     </div>
 
   );
-}
+};
