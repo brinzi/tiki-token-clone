@@ -1,384 +1,18 @@
-import { last } from 'cheerio/lib/api/traversing';
 import { ethers } from 'ethers';
-
 import React, { useEffect, useState } from 'react';
-import artifact from './artifacts/index.json';
+import artifact from './artifacts/token.json';
+import router from './artifacts/router.json';
+
+
 const countdown = require('../public/countdown.min.js');
 
 const pcsRouter = {
   // address: '0x05ff2b0db69458a0750badebc4f9e13add608c7f',
-  address: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
-  abi: [
-    {
-      inputs: [
-        { internalType: 'address', name: '_factory', type: 'address' },
-        { internalType: 'address', name: '_WETH', type: 'address' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'constructor',
-    },
-    {
-      inputs: [],
-      name: 'WETH',
-      outputs: [{ internalType: 'address', name: '', type: 'address' }],
-      stateMutability: 'view',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'address', name: 'tokenA', type: 'address' },
-        { internalType: 'address', name: 'tokenB', type: 'address' },
-        { internalType: 'uint256', name: 'amountADesired', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountBDesired', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountAMin', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountBMin', type: 'uint256' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'addLiquidity',
-      outputs: [
-        { internalType: 'uint256', name: 'amountA', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountB', type: 'uint256' },
-        { internalType: 'uint256', name: 'liquidity', type: 'uint256' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'address', name: 'token', type: 'address' },
-        {
-          internalType: 'uint256',
-          name: 'amountTokenDesired',
-          type: 'uint256',
-        },
-        { internalType: 'uint256', name: 'amountTokenMin', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountETHMin', type: 'uint256' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'addLiquidityETH',
-      outputs: [
-        { internalType: 'uint256', name: 'amountToken', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountETH', type: 'uint256' },
-        { internalType: 'uint256', name: 'liquidity', type: 'uint256' },
-      ],
-      stateMutability: 'payable',
-      type: 'function',
-    },
-    {
-      inputs: [],
-      name: 'factory',
-      outputs: [{ internalType: 'address', name: '', type: 'address' }],
-      stateMutability: 'view',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountOut', type: 'uint256' },
-        { internalType: 'uint256', name: 'reserveIn', type: 'uint256' },
-        { internalType: 'uint256', name: 'reserveOut', type: 'uint256' },
-      ],
-      name: 'getAmountIn',
-      outputs: [{ internalType: 'uint256', name: 'amountIn', type: 'uint256' }],
-      stateMutability: 'pure',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountIn', type: 'uint256' },
-        { internalType: 'uint256', name: 'reserveIn', type: 'uint256' },
-        { internalType: 'uint256', name: 'reserveOut', type: 'uint256' },
-      ],
-      name: 'getAmountOut',
-      outputs: [
-        { internalType: 'uint256', name: 'amountOut', type: 'uint256' },
-      ],
-      stateMutability: 'pure',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountOut', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-      ],
-      name: 'getAmountsIn',
-      outputs: [
-        { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' },
-      ],
-      stateMutability: 'view',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountIn', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-      ],
-      name: 'getAmountsOut',
-      outputs: [
-        { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' },
-      ],
-      stateMutability: 'view',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountA', type: 'uint256' },
-        { internalType: 'uint256', name: 'reserveA', type: 'uint256' },
-        { internalType: 'uint256', name: 'reserveB', type: 'uint256' },
-      ],
-      name: 'quote',
-      outputs: [{ internalType: 'uint256', name: 'amountB', type: 'uint256' }],
-      stateMutability: 'pure',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'address', name: 'tokenA', type: 'address' },
-        { internalType: 'address', name: 'tokenB', type: 'address' },
-        { internalType: 'uint256', name: 'liquidity', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountAMin', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountBMin', type: 'uint256' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'removeLiquidity',
-      outputs: [
-        { internalType: 'uint256', name: 'amountA', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountB', type: 'uint256' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'address', name: 'token', type: 'address' },
-        { internalType: 'uint256', name: 'liquidity', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountTokenMin', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountETHMin', type: 'uint256' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'removeLiquidityETH',
-      outputs: [
-        { internalType: 'uint256', name: 'amountToken', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountETH', type: 'uint256' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'address', name: 'token', type: 'address' },
-        { internalType: 'uint256', name: 'liquidity', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountTokenMin', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountETHMin', type: 'uint256' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'removeLiquidityETHSupportingFeeOnTransferTokens',
-      outputs: [
-        { internalType: 'uint256', name: 'amountETH', type: 'uint256' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'address', name: 'token', type: 'address' },
-        { internalType: 'uint256', name: 'liquidity', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountTokenMin', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountETHMin', type: 'uint256' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-        { internalType: 'bool', name: 'approveMax', type: 'bool' },
-        { internalType: 'uint8', name: 'v', type: 'uint8' },
-        { internalType: 'bytes32', name: 'r', type: 'bytes32' },
-        { internalType: 'bytes32', name: 's', type: 'bytes32' },
-      ],
-      name: 'removeLiquidityETHWithPermit',
-      outputs: [
-        { internalType: 'uint256', name: 'amountToken', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountETH', type: 'uint256' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'address', name: 'token', type: 'address' },
-        { internalType: 'uint256', name: 'liquidity', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountTokenMin', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountETHMin', type: 'uint256' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-        { internalType: 'bool', name: 'approveMax', type: 'bool' },
-        { internalType: 'uint8', name: 'v', type: 'uint8' },
-        { internalType: 'bytes32', name: 'r', type: 'bytes32' },
-        { internalType: 'bytes32', name: 's', type: 'bytes32' },
-      ],
-      name: 'removeLiquidityETHWithPermitSupportingFeeOnTransferTokens',
-      outputs: [
-        { internalType: 'uint256', name: 'amountETH', type: 'uint256' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'address', name: 'tokenA', type: 'address' },
-        { internalType: 'address', name: 'tokenB', type: 'address' },
-        { internalType: 'uint256', name: 'liquidity', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountAMin', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountBMin', type: 'uint256' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-        { internalType: 'bool', name: 'approveMax', type: 'bool' },
-        { internalType: 'uint8', name: 'v', type: 'uint8' },
-        { internalType: 'bytes32', name: 'r', type: 'bytes32' },
-        { internalType: 'bytes32', name: 's', type: 'bytes32' },
-      ],
-      name: 'removeLiquidityWithPermit',
-      outputs: [
-        { internalType: 'uint256', name: 'amountA', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountB', type: 'uint256' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountOut', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'swapETHForExactTokens',
-      outputs: [
-        { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' },
-      ],
-      stateMutability: 'payable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountOutMin', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'swapExactETHForTokens',
-      outputs: [
-        { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' },
-      ],
-      stateMutability: 'payable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountOutMin', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'swapExactETHForTokensSupportingFeeOnTransferTokens',
-      outputs: [],
-      stateMutability: 'payable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountIn', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountOutMin', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'swapExactTokensForETH',
-      outputs: [
-        { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountIn', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountOutMin', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'swapExactTokensForETHSupportingFeeOnTransferTokens',
-      outputs: [],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountIn', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountOutMin', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'swapExactTokensForTokens',
-      outputs: [
-        { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountIn', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountOutMin', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'swapExactTokensForTokensSupportingFeeOnTransferTokens',
-      outputs: [],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountOut', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountInMax', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'swapTokensForExactETH',
-      outputs: [
-        { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        { internalType: 'uint256', name: 'amountOut', type: 'uint256' },
-        { internalType: 'uint256', name: 'amountInMax', type: 'uint256' },
-        { internalType: 'address[]', name: 'path', type: 'address[]' },
-        { internalType: 'address', name: 'to', type: 'address' },
-        { internalType: 'uint256', name: 'deadline', type: 'uint256' },
-      ],
-      name: 'swapTokensForExactTokens',
-      outputs: [
-        { internalType: 'uint256[]', name: 'amounts', type: 'uint256[]' },
-      ],
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    { stateMutability: 'payable', type: 'receive' },
-  ],
+  address: '0x10ED43C718714eb63d5aA57B78B54704E256024E'
 };
-};
-const ltc = {
-  address: '0x4338665cbb7b2485a8855a139b75d5e34ab0db94',
-  decimals: 18,
+const doge = {
+  address: '0xba2ae424d960c26247dd6c32edc70b295c744c43',
+  decimals: 8,
 };
 
 const bnb = {
@@ -392,13 +26,13 @@ const busd = {
 };
 
 
-const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
+const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed1.defibit.io/");
 
-const magmaContractAddress = '0xC8840c4aD6124d731Ac1C3786D5eeB4953ab3868';
+const magmaContractAddress = '0x24401cf6e48757adee23c50bbd9284379f154ef0';
 const magmaDecimals = 9;
 const magmaAbi = artifact;
 const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, provider);
-const pcsRouterContract = new ethers.Contract(pcsRouter.address, pcsRouter.abi, provider);
+const pcsRouterContract = new ethers.Contract(pcsRouter.address, router, provider);
 
 
 async function getAmountsOut(quoteAmount, path) {
@@ -423,13 +57,13 @@ async function getBnbPrice() {
   return priceInUsd;
 }
 
-async function getCoinPricePrice() {
-  return 1;
+
+async function getDogePrice() {
+  const functionResponse = await getAmountsOut(`${1 * Math.pow(10, doge.decimals)}`, [doge.address, bnb.address, busd.address]);
+  const priceInUsd = Number(functionResponse?.amounts[2].toString()) / Math.pow(10, busd.decimals);
+  return priceInUsd;
 }
 
-
-
-// const address = "0x63222b8120e7b72D9a39093f44cb0a9dea629132";
 
 
 function TimeDifference(current, previous) {
@@ -505,12 +139,6 @@ async function getWallet() {
   return [wallet, walletAddr, magmaContract];
 }
 
-
-
-async function getTotalDistribution() {
-  return magmaContract.getTotalDividendsDistributed();
-}
-
 function numberWithCommas(x) {
   return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
@@ -527,26 +155,15 @@ async function getmagmaVolume() {
 export default function Home({ address }) {
 
   const [wallet, setWallet] = useState(null);
-  const [magmaings, setMagmaings] = useState(0);
-
   const [holdings, setHoldings] = useState(0);
-  const [totalDividentDistributed, setTotalDividentDistributed] = useState(0);
-  const [totalDividentDistributedUSD, setTotalDividentDistributedUSD] = useState(0);
-
-  const [paid, setPaid] = useState(0);
-  const [lastPaid, setLastPaid] = useState(0);
-  const [nextPayoutProgress, setNextPayoutProgress] = useState(0);
-  const [nextPayoutValue, setNextPayoutValue] = useState(0);
-
   const [claiming, setClaiming] = useState(false);
 
   const [refreshAddressData, setRefreshAddressData] = useState(true);
-  const [refreshTimeData, setRefreshTimeData] = useState(true);
+  const [magmaPrice, setmagmaPrice] = useState(0);
 
-  const [magmaVolume, setmagmaVolume] = useState(null);
-  const [bnbPrice, setBnbPrice] = useState(null);
-  const [magmaPrice, setmagmaPrice] = useState(null);
-  const [usdtPrice, setUSDTPrice] = useState(null);
+  const [totalSupply, setTotalSupply] = useState(0);
+  const [marketCap, setMarketCap] = useState(0);
+
   const claim = async () => {
 
     const wallet = await getMetamaskWallet();
@@ -554,7 +171,6 @@ export default function Home({ address }) {
 
 
     const magmaContract = new ethers.Contract(magmaContractAddress, magmaAbi, wallet);
-
     const walletAddr = await wallet.getAddress();
     try {
       setClaiming(true);
@@ -567,12 +183,11 @@ export default function Home({ address }) {
   };
 
   useEffect(() => {
-    getmagmaVolume().then(res => {
-      setmagmaVolume(res);
-    });
-
-    getBnbPrice().then(res => {
-      setBnbPrice(res);
+    getmagmaPrice().then(res => {
+      if (!res) {
+        res = 0;
+      }
+      setmagmaPrice(res.toFixed(8));
     });
 
 
@@ -586,53 +201,22 @@ export default function Home({ address }) {
   }, [address, refreshAddressData]);
 
   useEffect(() => {
-    getTotalDistribution().then(res => {
-      const val = res / 1e18;
-      setTotalDividentDistributed((val).toFixed(2));
-      setTotalDividentDistributedUSD((val * usdtPrice).toFixed(2));
+    setMarketCap(magmaPrice * totalSupply);
 
-    });
-  }, []);
+  }, [magmaPrice, totalSupply]);
 
-
-  // const earningsInDollars = magmaVolume == 0 ? (holdings / 1000000000) * 220000 : (holdings / 1000000000) * (magmaVolume * 0.11);
-  // const earningsInBnb = earningsInDollars / bnbPrice;
-
-  // console.log(lastPaid)
-  const payoutText = <>
-    <span >
-      {nextPayoutValue != 0 ? nextPayoutValue + ' DOGE' : 'Processing'}
-    </span>
-    {Date.now() - lastPaid >= 3 * 60 * 1000 * 60 ? ` | ${nextPayoutProgress}%`
-      : ` | ${countdown(Date.now(), lastPaid + 3 * 1000 * 60 * 60, countdown.HOURS | countdown.MINUTES).toString()}`}</>;
-  // const compoundedmagmaAfterNDays = (starting, days) => {
-  //   let accumulatedmagma = Number(starting);
-  //   for (let i = 0; i < days; i++) {
-  //     accumulatedmagma = magmaVolume == 0 ? accumulatedmagma + (((accumulatedmagma / 1000000000) * 220000) / magmaPrice) : accumulatedmagma + (((accumulatedmagma / 1000000000) * (magmaVolume * 0.11)) / magmaPrice);
-  //   }
-  //   return accumulatedmagma.toFixed(0);
-  // };
 
   const callContract = () => {
-    magmaContract.getNumberOfDividendTokenHolders().then(holders => {
-      magmaContract.balanceOf(address).then(balance => {
-        console.log((Number(balance.toString()) / 1e9));
-        setHoldings((Number(balance.toString()) / 1e9).toFixed(0));
-        magmaContract.getAccountDividendsInfo(address).then(result => {
-          provider.getBalance(address).then(balance => {
-            setMagmaings((balance / 1e18).toFixed(4));
-            setPaid(parseInt(result[4]._hex, 16) - parseInt(result[3]._hex, 16));
-            setLastPaid(parseInt(result[5]._hex, 16) * 1000);
-            setNextPayoutProgress((100 - ((parseInt(result[2]._hex, 16) / parseInt(holders._hex, 16)) * 100)).toFixed(0));
-            setNextPayoutValue((parseInt(result[3]._hex, 16) / 1e18).toFixed(4));
-            window.clearTimeout(timer);
-            timer = window.setTimeout(function () { setRefreshAddressData(!refreshAddressData); }, 9000);
-          });
-        });
-      });
+    magmaContract.balanceOf(address).then(balance => {
+      setHoldings((Number(balance.toString()) / 1e9).toFixed(0));
     });
+
+    magmaContract.getCirculatingSupply().then(supply => {
+      setTotalSupply(supply).toFixed(0);
+    });
+
+
   };
-  ``;
   return (
     <div>
       <div className="max-w-screen-lg mx-auto  mb-10">
@@ -648,7 +232,7 @@ export default function Home({ address }) {
                   } else {
                     claim();
                   }
-                }} className="bg-brown rounded-full  border-orange  py-2 px-4 disabled:text-gray" style={{fontSize: '1.5rem'}} disabled={claiming}>
+                }} className="bg-brown rounded-full  border-orange  py-2 px-4 disabled:text-gray" style={{ fontSize: '1.5rem' }} disabled={claiming}>
                   {claiming ? "Claiming..." :
 
                     !wallet ? 'Connect to Claim' : 'Claim DOGE'
@@ -671,7 +255,7 @@ export default function Home({ address }) {
               <div className="min-w-0 mt-4  rounded-lg shadow-custom">
                 <div className="p-4 mt-4 flex items-center justify-center text-center w-full">
                   <div>
-                    <p className="mb-2 text-2xl font-medium ">BabyMetaDoge <br /> Holdings</p>
+                    <p className="mb-2 text-2xl font-medium ">Holdings</p>
                     <p className="text-4xl  margin-stats text-brown">{`${numberWithCommas(holdings)}`}</p>
                   </div>
                 </div>
@@ -679,8 +263,8 @@ export default function Home({ address }) {
               <div className="min-w-0 mt-4 rounded-lg shadow-custom">
                 <div className="p-4 mt-4 flex items-center  justify-center text-center w-full">
                   <div>
-                    <p className="mb-2 text-2xl font-medium ">DOGE <br /> Received</p>
-                    <p className="text-4xl margin-stats text-brown">{`${(paid / 1e18).toFixed(4)}`}</p>
+                    <p className="mb-2 text-2xl font-medium ">Price</p>
+                    <p className="text-4xl margin-stats text-brown">${`${magmaPrice}`}</p>
                   </div>
                 </div>
               </div>
@@ -688,15 +272,15 @@ export default function Home({ address }) {
                 <div className="p-4 mt-4 flex items-center  justify-center text-center w-full">
 
                   <div>
-                    <p className="mb-2 text-2xl font-medium ">Last <br /> Payout</p>
-                    <p className="text-4xl  margin-stats text-brown">{`${lastPaid === 0 ? 'Never' : TimeDifference(Date.now(), lastPaid)}`}</p>
+                    <p className="mb-2 text-2xl font-medium ">MarketCap</p>
+                    <p className="text-4xl  margin-stats text-brown">${`${marketCap}`}</p>
                   </div>
                 </div>
               </div>
 
             </div>
 
-            <div className="grid grid-cols-2 gap-4 margin-stats">
+            {/* <div className="grid grid-cols-2 gap-4 margin-stats">
               <div className=" min-w-0 mt-4 rounded-lg   col-span-2">
                 <div className=" mt-4 flex flex-col text-center items-center">
                   <div className="relative pt-1 w-full">
@@ -726,10 +310,12 @@ export default function Home({ address }) {
                 <p className="margin-stats text-4xl text-5xl text-center">Total Paid To Holders</p>
                 <p className=" break-all  text-brown text-4xl md:text-5xl text-center mb-8 mt-2">
                   {totalDividentDistributed}
-                  <span className="text-yellow-300">DOGE</span>
+                  <span className="text-orange">DOGE</span>
+                  <br />
+                  =${totalDividentDistributedUSD}
                 </p>
               </div>
-            </div>
+            </div> */}
           </div>
         </section>
 

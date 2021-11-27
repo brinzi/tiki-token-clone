@@ -7,7 +7,7 @@ export default function Layout({ children, dispatch, address }) {
 
   return (
     <div className={modep ? "dark" : ""}>
-<div class="elementor-background-overlay"></div>
+      <div className="elementor-background-overlay"></div>
       <div className="flex ">
 
         <div className="flex flex-col flex-1 w-full h-screen ">
